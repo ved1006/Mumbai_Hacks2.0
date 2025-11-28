@@ -1,0 +1,288 @@
+/* src/components/LandingPage/LandingPage.css */
+
+.landing-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100vh;
+  background-color: var(--color-secondary);
+  color: var(--color-text-dark);
+  padding-bottom: 4rem; /* Space for the features section */
+}
+
+/* --- Top Bar (Brand + Status) --- */
+.top-bar {
+  position: absolute;
+  top: 1.5rem;
+  left: 0;
+  width: 100%;
+  padding: 0 3rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.brand-name {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #f9faf5;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.brand-highlight {
+  color: var(--color-accent-red);
+}
+
+.ai {
+  color: var(--color-accent-blue, #3b82f6);
+  font-weight: 700;
+}
+
+/* --- System Status Indicator --- */
+.system-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  backdrop-filter: blur(5px);
+  color: white;
+  font-weight: 500;
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: pulse-light 2s infinite;
+}
+
+@keyframes pulse-light {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* --- Hero Section --- */
+.hero-section {
+  background-color: var(--color-primary);
+  color: var(--color-text-light);
+  padding: 8rem 2rem 10rem 2rem; /* Space at top for brand bar */
+  text-align: center;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  clip-path: ellipse(120% 100% at 50% 0%);
+}
+
+.heart-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-accent-red);
+}
+
+.hero-section h1 {
+  font-size: 3.8rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 1rem;
+}
+
+.hero-section h1 span {
+  color: var(--color-accent-red);
+}
+
+.hero-section p {
+  font-size: 1.2rem;
+  max-width: 800px;
+  margin: 0 auto 3rem auto;
+  opacity: 0.9;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.hero-buttons .primary-button,
+.hero-buttons .secondary-button {
+  padding: 15px 35px;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  min-width: 250px;
+}
+
+.hero-buttons .primary-button {
+  background: var(--gradient-orange-red);
+  box-shadow: 0px 8px 20px rgba(255, 82, 82, 0.3);
+  color: white;
+}
+
+.hero-buttons .primary-button:hover {
+  box-shadow: 0px 10px 25px rgba(255, 82, 82, 0.5);
+  transform: translateY(-3px);
+}
+
+.hero-buttons .secondary-button {
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  color: white;
+}
+
+.hero-buttons .secondary-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-3px);
+}
+
+.hero-buttons .icon {
+  margin-right: 0.75rem;
+}
+
+/* --- Features Section --- */
+.features-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  width: 100%;
+  margin-top: -8rem;
+  position: relative;
+  z-index: 2;
+  padding: 0 2rem;
+}
+
+.feature-card {
+  background-color: var(--color-card-bg);
+  border-radius: var(--border-radius-card);
+  box-shadow: var(--shadow-medium);
+  padding: 2.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: var(--transition-medium);
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background-color: #e6f0ff;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feature-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-dark);
+}
+
+.feature-card p {
+  font-size: 0.95rem;
+  color: #6c757d;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+
+  .brand-name {
+    font-size: 1.5rem;
+  }
+
+  .hero-section {
+    padding: 7rem 1rem 8rem 1rem;
+  }
+
+  .hero-section h1 {
+    font-size: 2.8rem;
+  }
+
+  .hero-section p {
+    font-size: 1rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .hero-buttons .primary-button,
+  .hero-buttons .secondary-button {
+    width: 80%;
+  }
+
+  .features-section {
+    margin-top: -6rem;
+    grid-template-columns: 1fr;
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-name {
+    font-size: 1.3rem;
+  }
+
+  .hero-section h1 {
+    font-size: 2.2rem;
+  }
+
+  .hero-section p {
+    font-size: 0.9rem;
+  }
+
+  .hero-buttons .primary-button,
+  .hero-buttons .secondary-button {
+    padding: 12px 25px;
+    font-size: 1rem;
+    width: 90%;
+  }
+}
+/* ADD THIS AT THE END of LandingPage.css */
+
+/* ADD THIS AT THE END of LandingPage.css */
+
+.how-it-works-container {
+  width: 100%;
+  background-color: #ffffff; 
+  padding: 4rem 0;
+  margin-top: -8rem; /* This pulls it up under the hero curve */
+  position: relative;
+  z-index: 2;
+}
+
+/* We are replacing the old features section, so you can remove or hide it */
+.features-section {
+  display: none; 
+}

@@ -9,7 +9,7 @@ export default function PatientDashboard() {
         latitude: null,
         longitude: null,
         patient_count: 1,
-        severity: 'Stable',
+        severity: 'Critical',
         booking_type: 'bed_only' // or 'ambulance'
     });
     const [hospitals, setHospitals] = useState([]);
@@ -83,6 +83,23 @@ export default function PatientDashboard() {
                                 placeholder="e.g. Bandra West"
                                 value={formData.location}
                                 onChange={e => setFormData({ ...formData, location: e.target.value })}
+                                onBlur={async () => {
+                                    if (formData.location && !isLocating) {
+                                        try {
+                                            const res = await axios.get(`https://nominatim.openstreetmap.org/search?format=json&q=${formData.location}, Mumbai`);
+                                            if (res.data && res.data.length > 0) {
+                                                const { lat, lon } = res.data[0];
+                                                setFormData(prev => ({
+                                                    ...prev,
+                                                    latitude: parseFloat(lat),
+                                                    longitude: parseFloat(lon)
+                                                }));
+                                            }
+                                        } catch (error) {
+                                            console.error("Geocoding failed:", error);
+                                        }
+                                    }
+                                }}
                                 required
                                 style={{ flex: 1, padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
                             />
@@ -97,30 +114,16 @@ export default function PatientDashboard() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-                        <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Patient Count</label>
-                            <input
-                                type="number"
-                                min="1"
-                                value={formData.patient_count}
-                                onChange={e => setFormData({ ...formData, patient_count: parseInt(e.target.value) })}
-                                required
-                                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                            />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Severity</label>
-                            <select
-                                value={formData.severity}
-                                onChange={e => setFormData({ ...formData, severity: e.target.value })}
-                                style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
-                            >
-                                <option value="Stable">Stable</option>
-                                <option value="Critical">Critical</option>
-                                <option value="Trauma">Trauma</option>
-                            </select>
-                        </div>
+                    <div style={{ marginBottom: '1rem' }}>
+                        <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>Patient Count</label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={formData.patient_count}
+                            onChange={e => setFormData({ ...formData, patient_count: parseInt(e.target.value) })}
+                            required
+                            style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid #ccc' }}
+                        />
                     </div>
 
                     <div style={{ marginBottom: '1.5rem' }}>
@@ -181,18 +184,47 @@ export default function PatientDashboard() {
                     <div>
                         <h3>AI Recommended Hospitals</h3>
                         <div style={{ display: 'grid', gap: '1rem' }}>
-                            {hospitals.slice(0, 3).map(h => (
-                                <div key={h.hospital_id} style={{ padding: '1rem', background: 'white', borderRadius: '8px', borderLeft: `4px solid #22c55e` }}>
-                                    <strong>{h.hospital_name}</strong>
-                                    <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
-                                        Distance: ~{(Math.random() * 5 + 1).toFixed(1)} km
+                            {hospitals
+                                .map(h => {
+                                    if (formData.latitude && formData.longitude) {
+                                        const R = 6371; // Radius of the earth in km
+                                        const dLat = (h.latitude - formData.latitude) * (Math.PI / 180);
+                                        const dLon = (h.longitude - formData.longitude) * (Math.PI / 180);
+                                        const a =
+                                            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                                            Math.cos(formData.latitude * (Math.PI / 180)) * Math.cos(h.latitude * (Math.PI / 180)) *
+                                            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                                        const d = R * c;
+                                        return { ...h, distance: d };
+                                    }
+                                    return { ...h, distance: null };
+                                })
+                                .sort((a, b) => {
+                                    if (a.distance !== null && b.distance !== null) return a.distance - b.distance;
+                                    return 0;
+                                })
+                                .slice(0, 3)
+                                .map(h => (
+                                    <div key={h.hospital_id} style={{ padding: '1rem', background: 'white', borderRadius: '8px', borderLeft: `4px solid #22c55e` }}>
+                                        <strong>{h.hospital_name}</strong>
+                                        <div style={{ fontSize: '0.875rem', color: '#64748b' }}>
+                                            Distance: {h.distance !== null ? `~${h.distance.toFixed(1)} km` : 'Calculating...'}
+                                        </div>
+                                        <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px' }}>Beds: {h.bed_availability}</span>
+                                            <span style={{
+                                                fontSize: '0.75rem',
+                                                padding: '0.25rem 0.5rem',
+                                                borderRadius: '4px',
+                                                background: h.status === 'Red' ? '#fee2e2' : h.status === 'Yellow' ? '#fef9c3' : '#dcfce7',
+                                                color: h.status === 'Red' ? '#991b1b' : h.status === 'Yellow' ? '#854d0e' : '#166534'
+                                            }}>
+                                                Status: {h.status}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-                                        <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px' }}>Beds: {h.bed_availability}</span>
-                                        <span style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', background: '#f1f5f9', borderRadius: '4px' }}>Status: Green</span>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 )}

@@ -15,11 +15,15 @@
 }
 
 .logo {
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.75rem;
+  font-weight: 900;
   margin-bottom: 2rem;
   color: #38bdf8;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar ul {
@@ -41,7 +45,8 @@
   transition: all 0.2s;
 }
 
-.sidebar a:hover, .sidebar li.active a {
+.sidebar a:hover,
+.sidebar li.active a {
   background-color: #334155;
   color: white;
 }
@@ -60,17 +65,25 @@
 
 .top-bar {
   background-color: white;
-  padding: 1rem 2rem;
+  padding: 1.5rem 2.5rem;
+  /* Increased padding */
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  /* Added shadow for visibility */
+  z-index: 10;
 }
 
 .top-bar h1 {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 1.75rem;
+  /* Increased font size */
+  font-weight: 800;
+  /* Bolder text */
   color: #0f172a;
+  letter-spacing: -0.025em;
 }
 
 .status-indicator {

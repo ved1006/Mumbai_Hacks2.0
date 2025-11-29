@@ -15,7 +15,7 @@ from .logic_controller import run_full_simulation
 from .database import (
     init_db, get_all_hospitals, update_hospital_data, get_hospital, 
     create_incident, create_alert, get_alerts, delete_hospital, add_hospital,
-    get_latest_incident
+    get_latest_incident, update_hospital_data, get_all_recent_alerts
 )
 from .simulation import simulation
 from .ai_model import predict_congestion, train_model
@@ -123,6 +123,19 @@ def api_delete_hospital(hospital_id):
         return jsonify({"message": "Hospital deleted successfully"}), 200
     except Exception as e:
         logger.error(f"Error deleting hospital: {e}")
+    except Exception as e:
+        logger.error(f"Error deleting hospital: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/hospital/<hospital_id>/update", methods=["POST"])
+def api_update_hospital(hospital_id):
+    """Update hospital resources (Hospital Admin)."""
+    try:
+        data = request.get_json()
+        update_hospital_data(hospital_id, data)
+        return jsonify({"message": "Hospital updated successfully"}), 200
+    except Exception as e:
+        logger.error(f"Error updating hospital: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/admin/retrain", methods=["POST"])
@@ -160,19 +173,46 @@ def api_create_incident():
                 # Fallback if ALL hospitals are full (should ideally trigger a different workflow)
                 available_hospitals = hospitals
             
-            # Calculate distances if user location is provided
+            # Calculate distances and scores if user location is provided
             if user_lat and user_lon:
                 try:
                     user_lat = float(user_lat)
                     user_lon = float(user_lon)
                     
                     for h in available_hospitals:
-                        h['distance'] = calculate_distance(user_lat, user_lon, h['latitude'], h['longitude'])
+                        # 1. Distance
+                        dist = calculate_distance(user_lat, user_lon, h['latitude'], h['longitude'])
+                        h['distance'] = dist
+                        
+                        # 2. Bed Score (Inverse: more beds = lower score)
+                        # Add 1 to avoid division by zero, though we filtered > 0 already
+                        bed_score = (1 / (h['bed_availability'] + 1)) * 10
+                        
+                        # 3. Status Penalty
+                        status_penalty = 0
+                        status = h.get('status', 'Green')
+                        
+                        # Logic: Allow Red hospitals if patient count is low (<= 2)
+                        # If few patients, we can squeeze them in even if busy, if it's much closer.
+                        is_small_incident = data.get('patient_count', 1) <= 2
+                        
+                        if status == 'Yellow':
+                            status_penalty = 5
+                        elif status == 'Red':
+                            if is_small_incident:
+                                status_penalty = 10 # Reduced penalty (similar to Yellow)
+                            else:
+                                status_penalty = 100 # Heavy penalty for larger groups
+                            
+                        # Total Score (Lower is better)
+                        # User requested Distance weight = 70%
+                        # We'll use 0.7 for distance and keep others as additive penalties
+                        h['total_score'] = (dist * 0.7) + bed_score + status_penalty
                     
-                    # Sort by distance
-                    available_hospitals.sort(key=lambda x: x.get('distance', float('inf')))
+                    # Sort by Total Score
+                    available_hospitals.sort(key=lambda x: x.get('total_score', float('inf')))
                     
-                    # Pick the nearest one
+                    # Pick the best one
                     best_hospital = available_hospitals[0]
                     assigned_hospital_id = best_hospital['hospital_id']
                     assigned_hospital_name = best_hospital['hospital_name']
@@ -184,8 +224,9 @@ def api_create_incident():
                     assigned_hospital_id = best_hospital['hospital_id']
                     assigned_hospital_name = best_hospital['hospital_name']
             else:
-                # If no location, just pick the one with most beds or random
-                # For now, pick the one with most beds
+                # If no location, pick based on beds and status
+                # Simple score: Beds - StatusPenalty (Higher is better here, so we invert logic or just sort)
+                # Let's just sort by beds descending for now as fallback
                 best_hospital = max(available_hospitals, key=lambda x: x['bed_availability'])
                 assigned_hospital_id = best_hospital['hospital_id']
                 assigned_hospital_name = best_hospital['hospital_name']
@@ -202,6 +243,12 @@ def api_create_incident():
                          pass
 
         create_incident({**data, 'assigned_hospital_id': assigned_hospital_id})
+        
+        # Trigger alert for the assigned hospital
+        if assigned_hospital_id:
+            alert_msg = f"New Incoming Patient! Severity: {data.get('severity', 'Unknown')}, Count: {data.get('patient_count', 1)}"
+            severity = 'Critical' if data.get('severity') == 'Critical' else 'Warning'
+            create_alert(assigned_hospital_id, alert_msg, severity)
 
         return jsonify({
             "message": "Incident reported successfully",
@@ -233,6 +280,16 @@ def api_get_alerts(hospital_id):
         return jsonify(alerts), 200
     except Exception as e:
         logger.error(f"Error fetching alerts: {e}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/alerts/recent", methods=["GET"])
+def api_get_all_recent_alerts():
+    """Get recent alerts for all hospitals (Hospital Admin Dashboard)."""
+    try:
+        alerts = get_all_recent_alerts()
+        return jsonify(alerts), 200
+    except Exception as e:
+        logger.error(f"Error fetching recent alerts: {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/logs", methods=["GET"])

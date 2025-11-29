@@ -7,25 +7,51 @@ import '../../SharedStyles.css';
 /* Add these styles to LandingPage.css or inline them */
 const styles = `
 .role-button {
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.2);
-  background: rgba(255,255,255,0.1);
-  backdrop-filter: blur(10px);
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  border: none;
   color: white;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
+
 .role-button:hover {
-  background: rgba(255,255,255,0.2);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  filter: brightness(1.1);
 }
-.role-button.admin { border-color: #3b82f6; }
-.role-button.hospital { border-color: #10b981; }
-.role-button.dispatcher { border-color: #f59e0b; }
-.role-button.patient { border-color: #ef4444; }
+
+.role-button:active {
+  transform: translateY(-1px);
+}
+
+.role-button.admin { 
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+}
+
+.role-button.hospital { 
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
+}
+
+.role-button.dispatcher { 
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.39);
+}
+
+.role-button.patient { 
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+}
 `;
 
 import AnimatedFeature from './AnimatedFeature'; // Import the new component

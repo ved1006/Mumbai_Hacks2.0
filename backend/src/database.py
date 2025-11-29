@@ -63,32 +63,50 @@ def init_db():
     # Check if data exists
     c.execute('SELECT count(*) FROM hospital_load')
     if c.fetchone()[0] == 0:
-        logger.info("Initializing database with dummy data...")
-        # Load initial data from CSV if available, else generate dummy data
-        # For this implementation, we'll generate 12 dummy hospitals as requested
-        # Real Mumbai Hospitals Data
-        hospitals = [
-            ("H001", "KEM Hospital", 19.002, 72.842, 50, 20, 5, 80, 100),
-            ("H002", "Sion Hospital", 19.046, 72.860, 30, 40, 2, 90, 80),
-            ("H003", "Tata Memorial Hospital", 19.003, 72.845, 80, 5, 10, 70, 120),
-            ("H004", "Lilavati Hospital", 19.051, 72.829, 40, 30, 3, 85, 90),
-            ("H005", "Nanavati Hospital", 19.096, 72.840, 60, 15, 6, 75, 110),
-            ("H006", "Breach Candy Hospital", 18.972, 72.804, 25, 50, 1, 95, 70),
-            ("H007", "Jaslok Hospital", 18.971, 72.809, 70, 10, 8, 65, 130),
-            ("H008", "P.D. Hinduja Hospital", 19.033, 72.838, 90, 2, 12, 60, 150),
-            ("H009", "Kokilaben Dhirubhai Ambani Hospital", 19.131, 72.822, 35, 35, 4, 88, 85),
-            ("H010", "Dr L H Hiranandani Hospital", 19.119, 72.917, 55, 18, 7, 78, 105),
-            ("H011", "Fortis Hospital Mulund", 19.161, 72.943, 45, 25, 5, 82, 95),
-            ("H012", "Sir J.J. Group of Hospitals", 18.962, 72.834, 20, 60, 0, 98, 60),
-        ]
+        logger.info("Initializing database...")
         
-        for h in hospitals:
-            c.execute('''
-                INSERT INTO hospital_load (
-                    hospital_id, hospital_name, latitude, longitude, 
-                    er_admissions, bed_availability, ambulance_arrivals, staff_capacity, total_beds, timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8], datetime.now()))
+        csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "dataset", "hospital_data.csv")
+        
+        if os.path.exists(csv_path):
+            logger.info(f"Loading data from {csv_path}")
+            df = pd.read_csv(csv_path)
+            for _, row in df.iterrows():
+                c.execute('''
+                    INSERT INTO hospital_load (
+                        hospital_id, hospital_name, latitude, longitude, 
+                        er_admissions, bed_availability, ambulance_arrivals, staff_capacity, total_beds, status, timestamp
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (
+                    row['hospital_id'], row['hospital_name'], row['latitude'], row['longitude'],
+                    row.get('er_admissions', 0), row.get('bed_availability', 0), 
+                    row.get('ambulance_arrivals', 0), row.get('staff_capacity', 100), 
+                    row.get('total_beds', 100), row.get('status', 'Green'), datetime.now()
+                ))
+        else:
+            logger.info("CSV not found, using dummy data...")
+            # Real Mumbai Hospitals Data (Fallback)
+            hospitals = [
+                ("H001", "KEM Hospital", 19.002, 72.842, 50, 20, 5, 80, 100),
+                ("H002", "Sion Hospital", 19.046, 72.860, 30, 40, 2, 90, 80),
+                ("H003", "Tata Memorial Hospital", 19.003, 72.845, 80, 5, 10, 70, 120),
+                ("H004", "Lilavati Hospital", 19.051, 72.829, 40, 30, 3, 85, 90),
+                ("H005", "Nanavati Hospital", 19.096, 72.840, 60, 15, 6, 75, 110),
+                ("H006", "Breach Candy Hospital", 18.972, 72.804, 25, 50, 1, 95, 70),
+                ("H007", "Jaslok Hospital", 18.971, 72.809, 70, 10, 8, 65, 130),
+                ("H008", "P.D. Hinduja Hospital", 19.033, 72.838, 90, 2, 12, 60, 150),
+                ("H009", "Kokilaben Dhirubhai Ambani Hospital", 19.131, 72.822, 35, 35, 4, 88, 85),
+                ("H010", "Dr L H Hiranandani Hospital", 19.119, 72.917, 55, 18, 7, 78, 105),
+                ("H011", "Fortis Hospital Mulund", 19.161, 72.943, 45, 25, 5, 82, 95),
+                ("H012", "Sir J.J. Group of Hospitals", 18.962, 72.834, 20, 60, 0, 98, 60),
+            ]
+            
+            for h in hospitals:
+                c.execute('''
+                    INSERT INTO hospital_load (
+                        hospital_id, hospital_name, latitude, longitude, 
+                        er_admissions, bed_availability, ambulance_arrivals, staff_capacity, total_beds, timestamp
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], h[8], datetime.now()))
             
         conn.commit()
         
@@ -141,6 +159,23 @@ def get_latest_incident():
     conn.close()
     return dict(incident) if incident else None
 
+def get_incoming_patient_count(hospital_id, minutes=60):
+    conn = get_db_connection()
+    # SQLite datetime comparison: datetime('now', '-60 minutes')
+    # We need to sum patient_count
+    query = '''
+        SELECT SUM(patient_count) as total 
+        FROM incidents 
+        WHERE assigned_hospital_id = ? 
+        AND timestamp >= datetime('now', ?)
+    '''
+    # SQLite modifier string
+    time_modifier = f'-{minutes} minutes'
+    
+    result = conn.execute(query, (hospital_id, time_modifier)).fetchone()
+    conn.close()
+    return result['total'] if result['total'] else 0
+
 def create_alert(hospital_id, message, severity):
     conn = get_db_connection()
     conn.execute('''
@@ -153,6 +188,12 @@ def create_alert(hospital_id, message, severity):
 def get_alerts(hospital_id):
     conn = get_db_connection()
     alerts = conn.execute('SELECT * FROM alerts WHERE hospital_id = ? ORDER BY timestamp DESC LIMIT 10', (hospital_id,)).fetchall()
+    conn.close()
+    return [dict(a) for a in alerts]
+
+def get_all_recent_alerts(limit=50):
+    conn = get_db_connection()
+    alerts = conn.execute('SELECT * FROM alerts ORDER BY timestamp DESC LIMIT ?', (limit,)).fetchall()
     conn.close()
     return [dict(a) for a in alerts]
 

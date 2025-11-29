@@ -1,34 +1,35 @@
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import hospitalIconImg from "../../assets/hospital-icon.png";
 import { useGeocoding, useHospitalGeocoding } from "../../hooks/useGeocoding";
 import { useRouting } from "../../hooks/useRouting";
 
 // 🏥 Custom hospital icon
+// 🏥 Custom hospital icon
 const hospitalIcon = new L.Icon({
-  iconUrl: hospitalIconImg || "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
-  iconSize: [40, 40],
-  iconAnchor: [20, 40],
-  popupAnchor: [0, -30],
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png",
+  iconSize: [28, 28], // Smaller size
+  iconAnchor: [14, 28],
+  popupAnchor: [0, -28],
 });
 
 // 🚨 Incident icon
 const incidentIcon = new L.Icon({
   iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
+  iconSize: [35, 35], // Smaller size
+  iconAnchor: [17.5, 35],
   popupAnchor: [0, -35],
 });
 
 // ✅ Assigned Hospital Icon (Green/Highlighted)
 const assignedHospitalIcon = new L.Icon({
-  iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966486.png", // Green cross or distinct icon
-  iconSize: [50, 50],
-  iconAnchor: [25, 50],
+  iconUrl: "https://cdn-icons-png.flaticon.com/512/2966/2966486.png",
+  iconSize: [35, 35], // Smaller size
+  iconAnchor: [17.5, 35],
   popupAnchor: [0, -35],
-  className: 'assigned-hospital-marker' // We can add CSS animation if needed
+  className: 'assigned-hospital-marker'
 });
 
 // 🔄 Automatically fit map bounds
@@ -87,7 +88,13 @@ export default function MapDisplay({ incident = {}, assignments = [], assignedHo
         />
 
         {/* 🚨 Incident Marker */}
-        <Marker position={[incidentCoords.lat, incidentCoords.lon]} icon={incidentIcon}>
+        <Marker
+          position={[incidentCoords.lat, incidentCoords.lon]}
+          icon={incidentIcon}
+          ref={(ref) => {
+            if (ref) ref.openPopup();
+          }}
+        >
           <Popup>
             🚨 <b>Incident Location</b>
             <br />
@@ -104,6 +111,9 @@ export default function MapDisplay({ incident = {}, assignments = [], assignedHo
               position={[h.lat, h.lon]}
               icon={isAssigned ? assignedHospitalIcon : hospitalIcon}
               zIndexOffset={isAssigned ? 1000 : 0} // Bring assigned to front
+              ref={(ref) => {
+                if (ref && isAssigned) ref.openPopup();
+              }}
             >
               <Popup>
                 {isAssigned ? "✅ ASSIGNED: " : "🏥 "}

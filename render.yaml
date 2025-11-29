@@ -12,13 +12,11 @@ services:
       - key: PORT
         value: 10000
 
+staticSites:
   # Frontend Service (React/Vite)
-  - type: static
-    name: healthhive-frontend
-    env: static
-    region: singapore
+  - name: healthhive-frontend
     buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
+    publishPath: frontend/dist
     envVars:
       - key: VITE_API_URL
         fromService:

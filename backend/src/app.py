@@ -34,11 +34,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Allow requests from your Vercel app and local development server
-CORS(app, origins=[
-    "https://mumbai-hacks-five.vercel.app",
-    "https://mumbai-hacks-karantulsanis-projects.vercel.app",
-    "http://localhost:5173"
-])
+CORS(app,supports_credentials=True, origins="https://healthhive2.vercel.app")
 
 # Configuration
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))  # backend/src/

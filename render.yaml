@@ -1,0 +1,31 @@
+services:
+  # Backend Service (Flask)
+  - type: web
+    name: healthhive-backend
+    env: python
+    region: singapore # Optional: Choose a region close to you
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: gunicorn backend.src.app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: PORT
+        value: 10000
+
+  # Frontend Service (React/Vite)
+  - type: static
+    name: healthhive-frontend
+    env: static
+    region: singapore
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: healthhive-backend
+          property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html

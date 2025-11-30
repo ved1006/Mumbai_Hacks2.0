@@ -1,4 +1,5 @@
 # 🚨 HealthHIVE: AI Emergency Load Balancer for Urban Hospital Networks
+🌐 **Link:** https://healthhive2.vercel.app/
 
 An **intelligent agent** designed to optimize patient routing during **mass casualty incidents** in a city like **Mumbai**. This AI system predicts hospital strain and dynamically generates optimized dispatch plans — ensuring patients reach the *fastest available care*, not just the *closest hospital*.
 
@@ -56,12 +57,6 @@ Executes dynamic routing and load balancing:
 - **Build Tool:** Vite  
 - **API Client:** Axios  
 - **Styling:** CSS
-
----
-
-## 🔗 Project Link
-
-🌐 **Live Demo:** https://mumbai-hacks-five.vercel.app
 
 ---
 
